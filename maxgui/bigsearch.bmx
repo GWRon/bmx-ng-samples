@@ -1,3 +1,4 @@
+Strict
 Import MaxGui.Drivers
 
 AppTitle = "BigSearch"
@@ -9,11 +10,11 @@ Global HTML:TGadget [Views]
 Global HTMLTitle$ [Views]
 Global HTMLURL$ [Views]
 
-gadheight = 24
+Global gadheight = 24
 
-For site = 0 To Views - 1
-	ReadData HTMLTitle (site)
-	ReadData HTMLURL (site)
+For Local site = 0 To Views - 1
+	ReadData HTMLTitle[site]
+	ReadData HTMLURL[site]
 Next
 
 ' Some random examples...
@@ -22,7 +23,8 @@ Next
 'DefData "Yahoo", "http://search.yahoo.com/search?p="
 DefData "Merriam-Webster Dictionary", "http://www.m-w.com/cgi-bin/dictionary?"
 
-Load = ReadFile ("window.dat")
+Global Load:TStream = ReadFile ("window.dat")
+Global x, y, width, height
 If Load
 	x = Int (ReadLine (Load))
 	y = Int (ReadLine (Load))
@@ -39,44 +41,46 @@ If y > GadgetHeight (Desktop ()) x = 0
 If width <= 0 width = 640
 If height <= 0 height = 480
 
-window:TGadget = CreateWindow ("BigSearch", x, y, width, height)
+Global window:TGadget = CreateWindow ("BigSearch", x, y, width, height)
 
-htmlheight = (ClientHeight (window) - gadheight) / Views
+Global htmlheight = (ClientHeight (window) - gadheight) / Views
 
 If window
 
-	file:TGadget = CreateMenu ("&File", 0, WindowMenu (window))
-	xit:TGadget = CreateMenu ("E&xit", 1, file)
+	Local file:TGadget = CreateMenu ("&File", 0, WindowMenu (window))
+	Local xit:TGadget = CreateMenu ("E&xit", 1, file)
 
-	help:TGadget = CreateMenu ("&Help", 2, WindowMenu (window))
-	about:TGadget = CreateMenu ("&About...", 3, help)
+	Local help:TGadget = CreateMenu ("&Help", 2, WindowMenu (window))
+	Local about:TGadget = CreateMenu ("&About...", 3, help)
 
 	UpdateWindowMenu window
 	
-	search:TGadget = CreateTextField (4, 4, ClientWidth (window) - 152, gadheight, window)
+	Local search:TGadget = CreateTextField (4, 4, ClientWidth (window) - 152, gadheight, window)
 
-	go:TGadget = CreateButton ("Search!", ClientWidth (window) - 144, 4, 140, gadheight, window, BUTTON_OK)
+	Local go:TGadget = CreateButton ("Search!", ClientWidth (window) - 144, 4, 140, gadheight, window, BUTTON_OK)
 
 	SetGadgetLayout search, 1, 1, 1, 0
 	SetGadgetLayout go, 0, 1, 1, 0
 
-	tab:TGadget = CreateTabber (0, gadheight+4, ClientWidth (window), ClientHeight (window) - gadheight - 4, window)	
-	panel:TGadget = CreatePanel (0, 0, ClientWidth (tab), ClientHeight (tab), tab)
+	Local tab:TGadget = CreateTabber (0, gadheight+4, ClientWidth (window), ClientHeight (window) - gadheight - 4, window)	
+	Local panel:TGadget = CreatePanel (0, 0, ClientWidth (tab), ClientHeight (tab), tab)
 
 	SetGadgetLayout tab, 1, 1, 1, 1
 	SetGadgetLayout panel, 1, 1, 1, 1
 	
-	For loop = 0 To Views - 1
-		HTML (loop) = CreateHTMLView (0, 0, ClientWidth (panel), ClientHeight (panel), panel)
-		SetGadgetLayout HTML (loop), 1, 1, 1, 1
-		HideGadget HTML (loop)
-		AddGadgetItem (tab, HTMLTitle (loop))
+	Local HTML:TGadget[Views-1]
+	
+	For Local loop:Int = 0 To Views - 1
+		HTML[loop] = CreateHTMLView (0, 0, ClientWidth (panel), ClientHeight (panel), panel)
+		SetGadgetLayout HTML[loop], 1, 1, 1, 1
+		HideGadget HTML[loop]
+		AddGadgetItem (tab, HTMLTitle[loop])
 	Next
 	
-	ShowGadget HTML (0)
+	ShowGadget HTML[0]
 	SetStatusText window, "Done"
 	
-	urltimer:TTimer = CreateTimer (1)
+	Local urltimer:TTimer = CreateTimer (1)
 	
 	ActivateGadget search
 	
@@ -88,17 +92,17 @@ If window
 
 			Case EVENT_GADGETACTION
 				If (EventSource () = go)' Or ((EventSource () = search) And (EventData () = KEY_ENTER))
-					For site = 0 To Views - 1
-						HtmlViewGo HTML (site), HTMLURL (site) + TextFieldText (search)
+					For Local site = 0 To Views - 1
+						HtmlViewGo HTML[site], HTMLURL[site] + TextFieldText (search)
 					Next
 				EndIf
 
 				If EventSource () = tab
-					For loop = 0 To Views - 1
-						HideGadget HTML (loop)
+					For Local loop = 0 To Views - 1
+						HideGadget HTML[loop]
 					Next
-					ShowGadget HTML (SelectedGadgetItem (tab))
-					ActivateGadget HTML (SelectedGadgetItem (tab))
+					ShowGadget HTML[ SelectedGadgetItem (tab) ]
+					ActivateGadget HTML[ SelectedGadgetItem (tab) ]
 				EndIf
 				
 			Case EVENT_WINDOWCLOSE
@@ -108,7 +112,7 @@ If window
 
 			Case EVENT_TIMERTICK
 '			DebugLog HtmlViewStatus (HTML (SelectedGadgetItem (tab)))
-					If HtmlViewStatus (HTML (SelectedGadgetItem (tab))) 
+					If HtmlViewStatus (HTML[ SelectedGadgetItem (tab) ]) 
 						SetStatusText window, "Loading..."
 					Else
 						SetStatusText window, "Done"
@@ -129,7 +133,7 @@ EndIf
 
 Function SaveWindow (window:TGadget)
 	If window
-		save = WriteFile ("window.dat")
+		Local save:TStream = WriteFile ("window.dat")
 		If save
 			WriteLine save, GadgetX (window)
 			WriteLine save, GadgetY (window)
